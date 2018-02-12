@@ -1,0 +1,12 @@
+Extract Risk Neutral Probability and interpolate stike price from the following table,
+
+The data is volatility quoted by delta.
+
+Expiry / Strike   1M    3M
+10DP           32.25% 28.36%
+25DP           24.73% 21.78%
+40DP           20.21% 18.18%
+50D            18.24% 16.45%
+40DC           15.74% 14.62%
+25DC           13.70% 12.56%
+10DC           11.48% 10.94%
