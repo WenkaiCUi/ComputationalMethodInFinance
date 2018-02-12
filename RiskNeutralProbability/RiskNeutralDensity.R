@@ -1,11 +1,11 @@
-setwd("C:/Users/cui_w/Desktop/796/HW/HW3")
 data<-read.csv("data.csv",head=T)
 head(data)
 library(stringr)
 library(splines)
 library(ggplot2)
 library(reshape2)
-#a
+#extract a table of strikes corresponding to each option.
+
 strike<-function(delta,T,sigma,type){
   d1<-rep(0,7)
   for (i in 1:7){
@@ -27,11 +27,12 @@ tab1<-strike(delta,1/12,data[,2],type)
 tab1<-cbind(tab1,strike(delta,3/12,data[,3],type))
 Ktable<-as.data.frame(tab1)
 colnames(Ktable)<-c("1M","3M")
-#b
+
+# interpolation the volatility function for all strikes
 inter1M <- approxfun(tab1[,1],data[,2],rule=2 )
 inter3M  <- approxfun(tab1[,1],data[,3],rule=2 )
 
-#c
+#Extract the risk neutral density for 1 & 3 month options.
 predictsigma<-function(K,T){
   if (T==1){
     p<-inter1M(K) 
@@ -68,9 +69,6 @@ rnp<-function(K,T=1,h=0.01,sigma="changing"){
   
   p<- (Pcall(T,K-h,sigma)-2*Pcall(T,K,sigma)+Pcall(T,K+h,sigma))/h^2
 
-  # if (K<100){
-  #   p <- (Pput(T,K-h)-2*Pput(T,K)+Pput(T,K+h))/h^2
-  # }
   p
 }
 s<-seq(50,150,by=0.01)
@@ -80,6 +78,7 @@ pdf3M<-as.data.frame(cbind(s,pdf3M=rnp(s,T=3)))
 #clean data
 #pdf1M<-pdf1M[pdf1M[,2]>0 & pdf1M[,2]<0.2,]
 #pdf3M<-pdf3M[pdf3M[,2]>0& pdf3M[,2]<0.2,]
+# for the different feature of data, I choose different method to clean the data.
 for (i in 2:dim(pdf1M)[1]){
   pdf1M[1,2]<- 0
   if (pdf1M[i,2]>0.2){
@@ -93,15 +92,11 @@ for (i in 2:dim(pdf1M)[1]){
   }
 }
 for (i in 1:dim(pdf3M)[1]){
-  
-  # if(pdf3M[i,2]<0){
-  #   pdf3M[i,2]<- 0
-  # }
   if (pdf3M[i,2]>0.2|pdf3M[i,2]<0){
     pdf3M[i,2]<-pdf3M[i-1,2]
   }
 }
-# change scale
+# change scale so that all pdf sum to 1
 pdf1M[,2]<-pdf1M[,2]*100/sum(pdf1M[,2])
 pdf3M[,2]<-pdf3M[,2]*100/sum(pdf3M[,2])
 
@@ -111,7 +106,7 @@ pdf<-melt(pdf,id.vars=c("s"),variable.name = "type",value.name = "pdf")
 ggplot(pdf,aes(x=s,y=pdf,col=factor(type)))+
   geom_line()+labs(title="Density with Changing Sigma")
 
-#d
+#Extract the risk neutral density for 1 & 3 month options using a constant volatility equal to the 50D volatility.
 s2<-seq(70,130,by=0.1)
 pdf1M.con<- as.data.frame(cbind(s=s2,pdf1M=rnp(s2,T=1,sigma=0.1824)))
 pdf3M.con<- as.data.frame(cbind(s=s2,pdf3M=rnp(s2,T=3,sigma=0.1645)))
@@ -120,7 +115,7 @@ pdf.con<-melt(pdf.con,id.vars=c("s"),variable.name = "type",value.name = "pdf")
 ggplot(pdf.con,aes(x=s,y=pdf,col=factor(type)))+
   geom_line()+labs(title="Density with Constant Sigma")
 
-#e  digital price
+# Pricing digital option and European Call option using my Risk Neutral Density
 
 
 quad_digput1M<- function(K){
